@@ -6,7 +6,7 @@ const useSocket = () => {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:8000');
+    const newSocket = io(process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://13.126.221.59:8000');
     setSocket(newSocket);
 
     newSocket.on('notification', (notification) => {
