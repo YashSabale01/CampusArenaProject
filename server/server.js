@@ -63,15 +63,6 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/comments', commentRoutes);
 
-// Health check
-app.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'CampusArena API is running!',
-    version: '2.0.0'
-  });
-});
-
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
