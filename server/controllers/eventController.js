@@ -20,7 +20,7 @@ const getEvents = async (req, res, next) => {
 
     const total = await Event.countDocuments(filter);
 
-    const events = await Event.find(filter)({
+    res.json({
       status: "success",
       data: {
         events,
@@ -207,4 +207,5 @@ module.exports = {
   registerForEvent,
   cancelRegistration,
   getMyRegistrations,
+  getEventRegistrations,
 };
