@@ -2,6 +2,7 @@
   "name": "@campusarena/client",
   "version": "2.0.0",
   "private": true,
+  "homepage": "http://13.126.221.59",
   "dependencies": {
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^2.4.0",
