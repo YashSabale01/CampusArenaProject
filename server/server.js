@@ -39,12 +39,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting
+// Rate limiting - skip for /api/health (ALB pings it every 30s)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100
 });
-app.use('/api/', limiter);
+app.use('/api/', (req, res, next) => {
+  if (req.path === '/health') return next();
+  limiter(req, res, next);
+});
 
 // Body parser
 app.use(express.json({ limit: '10mb' }));
@@ -53,7 +56,7 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/uploads', express.static('uploads'));
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
@@ -63,8 +66,18 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/comments', commentRoutes);
 
-app.use(express.static(path.join(__dirname, '../client/build')));
+// ✅ Health check route - must be BEFORE the catch-all *
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
+// ✅ Unknown API routes return JSON 404 (not HTML)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
+});
+
+// Frontend static files + catch-all (only for non-API routes)
+app.use(express.static(path.join(__dirname, '../client/build')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
@@ -77,11 +90,11 @@ const PORT = process.env.PORT || 8000;
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
-  
+
   socket.on('join-event', (eventId) => {
     socket.join(`event-${eventId}`);
   });
-  
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
@@ -92,8 +105,7 @@ app.set('io', io);
 
 server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  
-  // Create default admins
+
   try {
     await User.createDefaultAdmins();
   } catch (error) {
